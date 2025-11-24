@@ -56,11 +56,13 @@
       // - state: random string to protect against CSRF (store and verify on callback)
       var state = Math.random().toString(36).slice(2);
       var options = {
-        scope: 'profile',           // request the public profile (name/email)
-        response_type: 'code',      // get an authorization code to exchange server-side
-        popup: true,
-        state: state
-      };
+            scope: 'profile',
+            response_type: 'code',
+            redirect_uri: 'https://jayant-saksham.github.io/Amazon-LWA-Login/index.html',
+            popup: true,
+            state: state
+        };
+
 
       // Show a small in-page message while waiting
       var out = document.getElementById('result');
