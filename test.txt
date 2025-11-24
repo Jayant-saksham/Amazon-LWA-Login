@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo: Login with Amazon (official SDK)</title>
+  <style>
+    body { font-family: system-ui, Arial; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; background:#f6f7fb; }
+    .card { background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); width: 360px; text-align:center; }
+    button { padding: 10px 16px; border-radius: 8px; border: none; font-weight:600; cursor:pointer; }
+    .lwa-btn { background: #232f3e; color: #fff; }
+    pre { text-align:left; background:#f2f4f7; padding:8px; border-radius:6px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Demo: Login with Amazon</h2>
+    <p>Click the button below to sign in using Amazon (OAuth via official SDK).</p>
+
+    <!-- Required by the SDK -->
+    <div id="amazon-root"></div>
+
+    <!-- Your visible button -->
+    <button id="lwaSignIn" class="lwa-btn">Sign in with Amazon</button>
+
+    <hr style="margin:16px 0" />
+
+    <div>
+      <strong>Result (for demo):</strong>
+      <pre id="result">Not signed in</pre>
+    </div>
+  </div>
+
+  <script>
+    // 1) Load the Login with Amazon SDK from Amazon's CDN (official)
+    (function(d){
+      var a = d.createElement('script'); a.type = 'text/javascript'; a.async = true;
+      a.id = 'amazon-login-sdk';
+      // Official LWA SDK path used by Amazon docs
+      a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
+      d.getElementById('amazon-root').appendChild(a);
+    })(document);
+
+    // 2) When SDK ready, set your client id
+    window.onAmazonLoginReady = function() {
+      // Replace with your registered Login with Amazon Client ID
+      amazon.Login.setClientId('YOUR_CLIENT_ID');
+    };
+
+    // 3) Button handler: call amazon.Login.authorize to open the popup/redirect
+    document.getElementById('lwaSignIn').addEventListener('click', function(){
+      // Options:
+      // - scope: what info you want (profile, postal_code, etc.)
+      // - response_type: 'code' to receive an authorization code (recommended, server will exchange)
+      // - popup: true opens a popup instead of redirecting the whole page
+      // - state: random string to protect against CSRF (store and verify on callback)
+      var state = Math.random().toString(36).slice(2);
+      var options = {
+        scope: 'profile',           // request the public profile (name/email)
+        response_type: 'code',      // get an authorization code to exchange server-side
+        popup: true,
+        state: state
+      };
+
+      // Show a small in-page message while waiting
+      var out = document.getElementById('result');
+      out.textContent = 'Opening Amazon sign-in...';
+
+      // Call authorize; the response object will be passed to the callback
+      amazon.Login.authorize(options, function(response) {
+        // If the user closed the popup or canceled, response may contain an error
+        if (!response || response.error) {
+          out.textContent = 'Sign-in canceled or error: ' + (response && response.error ? response.error : 'no response');
+          return;
+        }
+
+        // On success for response_type=code, response will include { code: 'AUTH_CODE', state: '...' }
+        out.textContent = 'Auth code received. Example:\n\n' + JSON.stringify(response, null, 2);
+
+        // IMPORTANT: Send the received code to your server to exchange for tokens:
+        // POST /auth/amazon/exchange { code: response.code, state: response.state }
+        // (Server-side code must verify 'state' and perform the token exchange securely.)
+      });
+    });
+  </script>
+</body>
+</html>
